@@ -1,50 +1,89 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { BsPencilSquare, BsFillTrash3Fill } from "react-icons/bs";
+import Header from "../../../components/Header/Header";
 import "./Productos.css";
+import { useGetProductsQuery } from "../../../slices/productsApiSlice";
+import { useDeleteProductMutation } from "../../../slices/productsApiSlice";
+import { toast } from "sonner";
+
 const Product = () => {
+  const { data: products, refetch, isLoading, error } = useGetProductsQuery();
+  const [deleteProduct] = useDeleteProductMutation();
+
+  const handleDelete = async (id) => {
+    toast("¿Estás seguro?", {
+      action: {
+        label: "Eliminar",
+        onClick: () => deleteHandler(id),
+      },
+      cancel: {
+        label: "Cancelar",
+      },
+    });
+  };
+
+  const deleteHandler = async (id) => {
+    try {
+      await deleteProduct(id).unwrap();
+      toast.success("Producto eliminado");
+      refetch();
+    } catch (error) {
+      toast.error(error?.data?.message);
+    }
+  };
+
+  if (isLoading) {
+    return <h2>Cargando...</h2>;
+  }
+
   return (
-    <div className="contenedor">
-      <h2>Administra Productos</h2>
-      <form action="/" method="POST">
-        <table className="table">
-          <thead className="thead-dark">
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Precio</th>
-              <th>Categoria</th>
-              <th>Marca</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1dj3y38y18je11d1u139jed39</td>
-              <td>Tenis</td>
-              <td>$500.00</td>
-              <td>Ropa</td>
-              <td>Nike</td>
-              <td>
-                <a href="/" className="btn border-shadow update">
-                  <span className="text-gradient">
-                    <Link className="nav-link user" to="/editproduct">
-                      <BsPencilSquare size={20} />
-                    </Link>
-                  </span>
-                </a>
-                <a className="btn botoncitos border-shadow delete">
-                  <Link className="nav-link user" to="/admin">
-                    <BsFillTrash3Fill size={20} />
-                  </Link>
-                  <span className="text-gradient"></span>
-                </a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </form>
-    </div>
+    <>
+      <Header text="Administra todos los productos"></Header>
+      <div className="contenedor">
+        <form action="/" method="POST">
+          <table className="table">
+            <thead className="thead-dark">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Categoria</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((product) => (
+                <tr key={product._id}>
+                  <td>{product._id}</td>
+                  <td>{product.name}</td>
+                  <td>{product.price}</td>
+                  <td>{product.category}</td>
+
+                  <td>
+                    <a href="/" className="btn border-shadow update">
+                      <span className="text-gradient">
+                        <Link className="nav-link user" to={`/editar/${product._id}`}>
+                          <BsPencilSquare size={20} />
+                        </Link>
+                      </span>
+                    </a>
+                    <a
+                      className="btn botoncitos border-shadow delete"
+                      onClick={() => handleDelete(product._id)}
+                    >
+                      <div className="nav-link user">
+                        <BsFillTrash3Fill size={20} color="#333" />
+                      </div>
+                      <span className="text-gradient"></span>
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </form>
+      </div>
+    </>
   );
 };
 
